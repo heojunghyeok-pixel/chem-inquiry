@@ -109,6 +109,22 @@ details summary::-webkit-details-marker { display: none; }
 #toast.show { opacity: 1; }
 #toast.err { background: #DC2626; }
 .loading { text-align: center; color: var(--text-sub); padding: 40px 0; }
+/* 웹 버전 (PC 큰 화면): 탭을 위로, 명단은 여러 열로 */
+@media (min-width: 900px) {
+  #app { max-width: 1100px; }
+  .hd { order: 0; border-radius: 0 0 16px 16px; padding: 28px 32px 22px; }
+  .tabbar { order: 1; position: sticky; top: 0; z-index: 5; padding: 0; border-top: 0; border-bottom: 1px solid var(--line); background: var(--bg); }
+  .tabbar .in { max-width: none; padding: 0 16px; gap: 4px; }
+  .tabbar button { flex: 0 0 auto; flex-direction: row; padding: 14px 18px; font-size: 15px; border-bottom: 3px solid transparent; }
+  .tabbar button::before { display: none; }
+  .tabbar button.on { border-bottom-color: var(--accent); }
+  main { order: 2; padding: 24px 16px 48px; }
+  .list { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); column-gap: 32px; }
+  .list > h3, .list > .empty, .list > p { grid-column: 1 / -1; }
+  .list .row:nth-child(-n+3) { border-top: 0; }
+  .btn { max-width: 360px; }
+  #toast { bottom: 32px; }
+}
 a { color: var(--plan); }
 </style>
 </head>

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">야자 출석</string>
+    <!-- 비워 두면 처음 실행할 때 주소를 입력받습니다. build.sh 의 인자로 미리 넣을 수 있습니다. -->
+    <string name="default_url"></string>
+</resources>
