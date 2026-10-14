@@ -27,9 +27,27 @@ const SHEETS = {
 
 // ───────────────────────── 설치 / 진입점 ─────────────────────────
 
-/** 처음 한 번 실행: 필요한 시트와 머리글을 만듭니다. */
+/**
+ * 데이터를 저장할 스프레드시트.
+ * 스프레드시트에 연결된 스크립트면 그 시트를, 독립 스크립트면 setup()이 만든(또는 지정한) 시트를 씁니다.
+ */
+function ss_() {
+  const bound = SpreadsheetApp.getActive();
+  if (bound) return bound;
+  const id = PropertiesService.getScriptProperties().getProperty('SPREADSHEET_ID');
+  if (!id) throw new Error('데이터 스프레드시트가 없습니다. 관리자가 Apps Script 편집기에서 setup()을 먼저 실행해야 합니다.');
+  return SpreadsheetApp.openById(id);
+}
+
+/** 처음 한 번 실행: 필요한 시트와 머리글을 만듭니다. 독립 스크립트면 스프레드시트도 새로 만듭니다. */
 function setup() {
-  const ss = SpreadsheetApp.getActive();
+  const props = PropertiesService.getScriptProperties();
+  let ss = SpreadsheetApp.getActive();
+  if (!ss) {
+    const id = props.getProperty('SPREADSHEET_ID');
+    ss = id ? SpreadsheetApp.openById(id) : SpreadsheetApp.create('야자 출석 데이터');
+    props.setProperty('SPREADSHEET_ID', ss.getId());
+  }
   Object.keys(SHEETS).forEach(key => {
     const { name, header } = SHEETS[key];
     const sh = ss.getSheetByName(name) || ss.insertSheet(name);
@@ -37,6 +55,9 @@ function setup() {
     sh.getRange(1, 1, 1, header.length).setValues([header]).setFontWeight('bold');
     sh.setFrozenRows(1);
   });
+  const blank = ss.getSheetByName('시트1') || ss.getSheetByName('Sheet1');
+  if (blank && ss.getSheets().length > 1 && blank.getLastRow() === 0) ss.deleteSheet(blank);
+  Logger.log('데이터 스프레드시트: ' + ss.getUrl());
 }
 
 function doGet() {
@@ -78,7 +99,7 @@ function cell_(v) {
 /** 시트를 읽어 {sh, rows:[{row, v:[문자열...]}]} 로 돌려줍니다. */
 function table_(key) {
   const { name, header } = SHEETS[key];
-  const sh = SpreadsheetApp.getActive().getSheetByName(name);
+  const sh = ss_().getSheetByName(name);
   if (!sh) throw new Error(`'${name}' 시트가 없습니다. 관리자가 setup()을 먼저 실행해야 합니다.`);
   const values = sh.getDataRange().getValues();
   const rows = [];
