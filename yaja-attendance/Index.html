@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<base target="_top">
+<meta charset="utf-8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --primary: #1F3A68; --primary-soft: #E3E9F4; --accent: #F59E0B; --accent-text: #B45309;
+  --bg: #F8F6F1; --surface: #FFFFFF; --text: #1A2233; --text-sub: #6B6F7A; --text-hint: #9CA3AF;
+  --line: #E8E4DA; --border: #D9D3C5; --muted: #F1EEE6; --seg: #E8E4DA;
+  --hero-sub: #B8C4DA; --hero-track: #34507F;
+  --ok: #16A34A; --ok-bg: #DCFCE7; --warn: #B45309; --warn-bg: #FEF3C7; --bad: #DC2626; --bad-bg: #FEE2E2;
+  --plan: #1F3A68; --plan-bg: #E3E9F4;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --primary: #3B6BB5; --primary-soft: #1E2C45; --accent: #FBBF24; --accent-text: #FBBF24;
+    --bg: #0B1220; --surface: #151E2E; --text: #E5E7EB; --text-sub: #9CA3AF; --text-hint: #6B7280;
+    --line: #243045; --border: #33415C; --muted: #1C2638; --seg: #1C2638;
+    --hero-sub: #9FB0CC; --hero-track: #2A3D5E;
+    --ok: #4ADE80; --ok-bg: rgba(74,222,128,.15); --warn: #FBBF24; --warn-bg: rgba(251,191,36,.15);
+    --bad: #F87171; --bad-bg: rgba(248,113,113,.15); --plan: #93B4E8; --plan-bg: rgba(147,180,232,.15);
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { background: var(--bg); color: var(--text); font-family: 'Noto Sans KR', sans-serif; font-size: 14px; }
+button, input, select { font: inherit; color: inherit; }
+button { cursor: pointer; border: 0; background: none; }
+#app { max-width: 480px; margin: 0 auto; min-height: 100vh; display: flex; flex-direction: column; }
+.hd { background: #1F3A68; color: #fff; padding: 32px 20px 22px; }
+.hd h1 { font-size: 22px; font-weight: 700; }
+.hd p { font-size: 13px; color: #B8C4DA; margin-top: 4px; }
+main { flex: 1; padding: 16px 16px 96px; display: flex; flex-direction: column; gap: 16px; }
+.card { background: var(--surface); border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+.card h3 { font-size: 14px; font-weight: 700; }
+.note { font-size: 12px; color: var(--text-sub); }
+.empty { color: var(--text-hint); font-size: 13px; }
+.btn { width: 100%; min-height: 52px; border-radius: 12px; background: var(--primary); color: #fff; font-size: 16px; font-weight: 700; }
+.btn.line { background: var(--surface); color: var(--primary); border: 1px solid var(--primary); }
+.btn:disabled { opacity: .5; cursor: default; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { min-height: 38px; padding: 8px 14px; border-radius: 999px; background: var(--surface); border: 1px solid var(--border); color: var(--text); }
+.chip.on { background: var(--primary); border-color: var(--primary); color: #fff; font-weight: 700; }
+.chip:disabled { opacity: .4; cursor: default; }
+.seg { display: flex; gap: 4px; padding: 4px; border-radius: 12px; background: var(--seg); }
+.seg button { flex: 1; min-height: 40px; border-radius: 9px; color: var(--text-sub); }
+.seg button.on { background: var(--surface); color: var(--text); font-weight: 700; }
+.field { width: 100%; min-height: 46px; padding: 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface); }
+.attach { display: flex; justify-content: center; align-items: center; min-height: 46px; padding: 12px; border: 1px dashed var(--text-hint); border-radius: 10px; color: var(--text-sub); font-weight: 500; cursor: pointer; }
+.attach input { display: none; }
+.pill { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 500; white-space: nowrap; }
+.present, .late-ok { color: var(--ok); background: var(--ok-bg); }
+.late, .excused { color: var(--warn); background: var(--warn-bg); }
+.absent { color: var(--bad); background: var(--bad-bg); }
+.planned { color: var(--plan); background: var(--plan-bg); }
+.unchecked { color: var(--text-sub); background: var(--muted); }
+/* 신청 표 */
+.grid { width: 100%; border-collapse: collapse; }
+.grid th { font-size: 14px; color: var(--text-sub); padding-bottom: 8px; font-weight: 700; }
+.grid td { border-top: 1px solid var(--line); padding: 10px 0; text-align: center; }
+.grid td:first-child { text-align: left; width: 96px; }
+.grid .pn { font-weight: 700; }
+.grid .pt { font-size: 11px; color: var(--text-sub); }
+.ck { width: 36px; height: 36px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); }
+.ck.on { background: var(--primary); border-color: var(--primary); }
+.ck.on::after { content: ''; display: block; width: 8px; height: 14px; margin: 0 auto 4px; border: solid #fff; border-width: 0 3px 3px 0; transform: rotate(45deg); }
+/* 통계 */
+.stats { display: flex; gap: 8px; }
+.stat { flex: 1; background: var(--surface); border-radius: 14px; padding: 14px 8px; text-align: center; }
+.stat small { display: block; font-size: 12px; color: var(--text-sub); }
+.stat b { display: block; font-size: 22px; margin-top: 4px; }
+.hero { background: #1F3A68; color: #fff; border-radius: 16px; padding: 18px; display: flex; flex-direction: column; gap: 10px; }
+.hero .top { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+.hero b { font-size: 22px; color: #F59E0B; }
+.hero span { font-size: 13px; font-weight: 500; }
+.hero small { font-size: 12px; color: #B8C4DA; }
+.bar { height: 8px; border-radius: 4px; background: var(--muted); overflow: hidden; }
+.hero .bar { background: #34507F; }
+.bar i { display: block; height: 100%; border-radius: 4px; background: var(--primary); }
+.hero .bar i { background: #F59E0B; }
+.day-items { display: flex; flex-wrap: wrap; gap: 6px; }
+.day-item { display: flex; align-items: center; gap: 6px; padding: 6px 8px 6px 10px; border-radius: 10px; background: var(--muted); font-weight: 500; font-size: 13px; }
+/* 명단 */
+.list { padding: 4px 16px; gap: 0; }
+.row { display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 8px 0; border-top: 1px solid var(--line); width: 100%; text-align: left; }
+.row:first-child { border-top: 0; }
+.row .c { font-size: 13px; color: var(--text-sub); min-width: 40px; }
+.row .n { flex: 1; font-size: 15px; font-weight: 500; }
+.row .t { font-size: 11px; color: var(--text-hint); }
+.row .d { font-size: 12px; color: var(--text-sub); }
+.sp { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+details summary { list-style: none; cursor: pointer; }
+details summary::-webkit-details-marker { display: none; }
+.tbl { width: 100%; border-collapse: collapse; }
+.tbl th { font-size: 12px; color: var(--text-sub); padding: 10px 0; }
+.tbl td { border-top: 1px solid var(--line); padding: 11px 0; text-align: center; }
+.tbl td:nth-child(2) { text-align: left; }
+.tbl .warn { color: var(--bad); font-weight: 700; }
+.tabbar { position: fixed; bottom: 0; left: 0; right: 0; display: flex; justify-content: center; background: var(--surface); border-top: 1px solid var(--line); padding: 10px 0 calc(16px + env(safe-area-inset-bottom)); }
+.tabbar .in { display: flex; width: 100%; max-width: 480px; }
+.tabbar button { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; min-height: 44px; color: var(--text-sub); font-size: 13px; }
+.tabbar button::before { content: ''; width: 6px; height: 6px; border-radius: 3px; background: transparent; }
+.tabbar button.on { color: var(--primary); font-weight: 700; }
+.tabbar button.on::before { background: var(--accent); }
+@media (prefers-color-scheme: dark) { .tabbar button.on { color: #93B4E8; } }
+#toast { position: fixed; left: 50%; bottom: 96px; transform: translateX(-50%); max-width: 90%; padding: 12px 16px; border-radius: 12px; background: #1A2233; color: #fff; font-size: 13px; opacity: 0; pointer-events: none; transition: opacity .2s; z-index: 10; }
+#toast.show { opacity: 1; }
+#toast.err { background: #DC2626; }
+.loading { text-align: center; color: var(--text-sub); padding: 40px 0; }
+a { color: var(--plan); }
+</style>
+</head>
+<body>
+<div id="app">
+  <header class="hd"><h1 id="title">야자 출석</h1><p id="sub">불러오는 중…</p></header>
+  <main id="main"><p class="loading">불러오는 중…</p></main>
+  <nav class="tabbar" id="tabs" hidden><div class="in"></div></nav>
+</div>
+<div id="toast"></div>
+<script>
+const S = { init: null, me: null, tab: null, absence: null, roster: null, report: null };
+const $ = s => document.querySelector(s);
+const main = () => $('#main');
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const md = ds => { const [, m, d] = ds.split('-').map(Number); return `${m}/${d}`; };
+const WD = ['일', '월', '화', '수', '목', '금', '토'];
+const pad = n => String(n).padStart(2, '0');
+function localToday() { const d = new Date(); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; }
+function localHM() { const d = new Date(); return `${pad(d.getHours())}:${pad(d.getMinutes())}`; }
+function weekdayOf(ds) { const [y, m, d] = ds.split('-').map(Number); return WD[new Date(y, m - 1, d).getDay()]; }
+
+function api(fn, ...args) {
+  return new Promise((ok, no) => google.script.run.withSuccessHandler(ok).withFailureHandler(no)[fn](...args));
+}
+let toastTimer;
+function toast(msg, err) {
+  const t = $('#toast');
+  t.textContent = msg; t.className = 'show' + (err ? ' err' : '');
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => { t.className = ''; }, 2600);
+}
+function fail(e) { toast((e && e.message) || String(e), true); }
+function header(title, sub) { $('#title').textContent = title; $('#sub').textContent = sub || ''; }
+function loading() { main().innerHTML = '<p class="loading">불러오는 중…</p>'; }
+
+const TABS = {
+  student: [['schedule', '정기 신청'], ['absence', '불참 입력'], ['status', '내 현황']],
+  teacher: [['roster', '출석 체크'], ['report', '우리 반']],
+};
+const VIEWS = { schedule: viewSchedule, absence: viewAbsence, status: viewStatus, roster: viewRoster, report: viewReport };
+
+function renderTabs() {
+  const tabs = TABS[S.me.role];
+  const nav = $('#tabs');
+  nav.hidden = false;
+  nav.firstElementChild.innerHTML = tabs.map(([k, l]) => `<button data-tab="${k}" class="${k === S.tab ? 'on' : ''}">${l}</button>`).join('');
+}
+function go(tab) {
+  S.tab = tab; renderTabs(); loading(); window.scrollTo(0, 0);
+  VIEWS[tab]().catch(fail);
+}
+$('#tabs').addEventListener('click', e => { const b = e.target.closest('button[data-tab]'); if (b) go(b.dataset.tab); });
+
+// ───────────── 학생: 정기 신청 ─────────────
+async function viewSchedule() {
+  const me = S.me;
+  header('정기 신청', `${me.cls}반 ${me.num}번 ${me.name} · 꾸준함이 실력이 됩니다`);
+  const sel = new Set(await api('getMySchedule'));
+  const { periods, days } = S.init;
+  const draw = () => {
+    main().innerHTML = `
+      <div class="card"><table class="grid">
+        <tr><th></th>${days.map(d => `<th>${d}</th>`).join('')}</tr>
+        ${periods.map(p => `<tr><td><div class="pn">${p.name}</div><div class="pt">${p.start}~${p.end}</div></td>
+          ${days.map(d => `<td><button class="ck ${sel.has(d + '|' + p.id) ? 'on' : ''}" data-k="${d}|${p.id}" aria-label="${d} ${p.name}" aria-pressed="${sel.has(d + '|' + p.id)}"></button></td>`).join('')}</tr>`).join('')}
+      </table></div>
+      <p class="note">주 ${sel.size}교시 신청 · 저장하면 바로 반영됩니다</p>
+      <button class="btn" id="save">저장</button>`;
+  };
+  draw();
+  main().onclick = async e => {
+    const ck = e.target.closest('.ck');
+    if (ck) { const k = ck.dataset.k; sel.has(k) ? sel.delete(k) : sel.add(k); draw(); return; }
+    if (e.target.id === 'save') {
+      e.target.disabled = true;
+      try { await api('saveMySchedule', [...sel].map(k => k.split('|'))); toast('저장했습니다'); }
+      catch (err) { fail(err); }
+      e.target.disabled = false;
+    }
+  };
+}
+
+// ───────────── 학생: 불참 입력 ─────────────
+function newAbsence() { return { date: localToday(), type: '사유', periods: new Set(), reason: '', leave: '', detail: '', file: null, fileName: '' }; }
+async function viewAbsence() {
+  header('불참 입력', '입력하면 바로 출석 명단에서 빠집니다');
+  if (!S.absence) S.absence = newAbsence();
+  const mine = await api('getMyExceptions');
+  drawAbsence(mine);
+}
+function drawAbsence(mine) {
+  const f = S.absence, { periods, reasons } = S.init;
+  const isToday = f.date === localToday(), nowHM = localHM();
+  const started = p => isToday && p.start <= nowHM;
+  main().innerHTML = `
+    <div class="card" style="gap:8px"><h3>날짜</h3><input type="date" class="field" id="date" value="${f.date}" min="${localToday()}"></div>
+    <div class="card" style="gap:10px"><h3>종류</h3>
+      <div class="seg">${['결석', '조퇴', '사유'].map(t => `<button data-type="${t}" class="${f.type === t ? 'on' : ''}">${t === '사유' ? '교시별 사유' : t}</button>`).join('')}</div></div>
+    <div class="card" style="gap:10px">
+      ${f.type === '사유' ? `<h3>교시</h3><div class="chips">${periods.map(p => `<button class="chip ${f.periods.has(p.id) ? 'on' : ''}" data-p="${p.id}" ${started(p) ? 'disabled' : ''}>${p.name}</button>`).join('')}</div>` : ''}
+      ${f.type === '조퇴' ? `<h3>조퇴 시각</h3><input type="time" class="field" id="leave" value="${f.leave}">` : ''}
+      <h3>사유${f.type === '사유' ? '' : ' (선택)'}</h3>
+      <div class="chips">${reasons.map(r => `<button class="chip ${f.reason === r ? 'on' : ''}" data-r="${esc(r)}">${esc(r)}</button>`).join('')}</div>
+      <input class="field" id="detail" placeholder="상세 내용 (선택)" maxlength="200" value="${esc(f.detail)}">
+      <label class="attach">${f.fileName ? '📎 ' + esc(f.fileName) : '+ 증빙 사진 첨부 (선택)'}<input type="file" id="file" accept="image/*"></label>
+    </div>
+    <p class="note">※ 교시 시작 전까지 입력할 수 있습니다</p>
+    <button class="btn" id="submit">제출</button>
+    <div class="card list" style="padding:12px 16px 4px"><h3>최근 입력 내역</h3>
+      ${mine.length ? mine.map(x => `<div class="row"><div class="n" style="font-size:14px">${md(x.date)}(${x.day}) <span class="pill ${x.type === '결석' ? 'absent' : 'excused'}">${esc(x.label)}</span>
+        <div class="d">${esc(x.summary)}${x.detail ? ' · ' + esc(x.detail) : ''}${x.hasProof ? ' · 증빙 첨부' : ''}</div></div>
+        ${x.canDelete ? `<button class="chip" data-del="${esc(x.id)}">삭제</button>` : ''}</div>`).join('') : '<p class="empty" style="padding-bottom:12px">입력한 내역이 없습니다</p>'}
+    </div>`;
+  const m = main();
+  m.onclick = async e => {
+    const t = e.target.closest('button');
+    if (!t) return;
+    if (t.dataset.type) { f.type = t.dataset.type; drawAbsence(mine); }
+    else if (t.dataset.p) { f.periods.has(t.dataset.p) ? f.periods.delete(t.dataset.p) : f.periods.add(t.dataset.p); drawAbsence(mine); }
+    else if (t.dataset.r) { f.reason = f.reason === t.dataset.r ? '' : t.dataset.r; drawAbsence(mine); }
+    else if (t.dataset.del) {
+      if (!confirm('이 입력을 삭제할까요? 삭제하면 다시 출석 대상이 됩니다.')) return;
+      try { drawAbsence(await api('deleteException', t.dataset.del)); toast('삭제했습니다'); } catch (err) { fail(err); }
+    } else if (t.id === 'submit') {
+      t.disabled = true;
+      try {
+        const res = await api('addException', {
+          date: f.date, type: f.type, periods: [...f.periods], leave: f.leave, reason: f.reason, detail: f.detail, file: f.file,
+        });
+        S.absence = newAbsence();
+        drawAbsence(res);
+        toast('입력했습니다. 출석 명단에서 빠집니다.');
+      } catch (err) { fail(err); t.disabled = false; }
+    }
+  };
+  m.onchange = async e => {
+    if (e.target.id === 'date') { f.date = e.target.value; f.periods.clear(); drawAbsence(mine); }
+    if (e.target.id === 'leave') f.leave = e.target.value;
+    if (e.target.id === 'file' && e.target.files[0]) {
+      try { f.file = await shrinkImage(e.target.files[0]); f.fileName = e.target.files[0].name; drawAbsence(mine); }
+      catch (err) { fail(err); }
+    }
+  };
+  m.oninput = e => { if (e.target.id === 'detail') f.detail = e.target.value; };
+}
+/** 사진을 긴 변 1280px JPEG로 줄여 base64로 만듭니다. */
+function shrinkImage(file) {
+  return new Promise((ok, no) => {
+    if (!/^image\//.test(file.type)) return no(new Error('사진 파일만 첨부할 수 있습니다.'));
+    const img = new Image();
+    img.onload = () => {
+      const k = Math.min(1, 1280 / Math.max(img.width, img.height));
+      const c = document.createElement('canvas');
+      c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(img.src);
+      ok({ name: file.name.replace(/\.\w+$/, '') + '.jpg', type: 'image/jpeg', data: c.toDataURL('image/jpeg', 0.8).split(',')[1] });
+    };
+    img.onerror = () => no(new Error('사진을 읽을 수 없습니다.'));
+    img.src = URL.createObjectURL(file);
+  });
+}
+
+// ───────────── 학생: 내 현황 ─────────────
+async function viewStatus() {
+  const d = await api('getMyStatus');
+  const w = d.week;
+  header('내 현황', `이번 주 ${md(w[0].date)}(월) ~ ${md(w[4].date)}(금)`);
+  const h = Math.floor(d.studyMin / 60), mi = d.studyMin % 60;
+  const ratio = d.planned ? d.done / d.planned : 0;
+  const s = d.stats;
+  main().innerHTML = `
+    <div class="hero">
+      <div class="top"><b>연속 출석 ${d.streak}일째</b><span>이번 주 공부 ${h}시간 ${mi}분</span></div>
+      <div class="bar"><i style="width:${Math.round(ratio * 100)}%"></i></div>
+      <small>이번 주 ${d.planned}교시 중 ${d.done}교시 출석${d.planned > d.done ? ' · 남은 교시도 화이팅' : d.planned ? ' · 이번 주 목표 달성!' : ''}</small>
+    </div>
+    <div class="stats">
+      <div class="stat"><small>출석률</small><b style="color:var(--primary)">${s.rate == null ? '-' : s.rate + '%'}</b></div>
+      <div class="stat"><small>사유 불참</small><b style="color:var(--warn)">${s.excused}회</b></div>
+      <div class="stat"><small>무단 불참</small><b style="color:var(--bad)">${s.absent}회</b></div>
+    </div>
+    <p class="note" style="margin-top:-8px">※ 통계는 최근 4주 기준입니다</p>
+    ${w.map(x => `<div class="card" style="padding:14px;gap:10px"><h3>${x.day} ${md(x.date)}${x.isToday ? ' · 오늘' : ''}</h3>
+      ${x.closed ? '<p class="empty">운영하지 않는 날</p>' : x.items.length ? `<div class="day-items">${x.items.map(i => `<div class="day-item">${i.period}<span class="pill ${i.code}">${i.code === 'excused' ? '사유·' + esc(i.label) : esc(i.label)}</span></div>`).join('')}</div>` : '<p class="empty">신청 없음</p>'}
+    </div>`).join('')}`;
+  main().onclick = null;
+}
+
+// ───────────── 교사: 출석 체크 ─────────────
+function currentPeriodId() {
+  const hm = localHM();
+  const p = S.init.periods.find(x => hm < x.end);
+  return (p || S.init.periods[S.init.periods.length - 1]).id;
+}
+async function viewRoster() {
+  if (!S.roster) S.roster = { date: localToday(), pid: currentPeriodId() };
+  const r = await api('getRoster', S.roster.date, S.roster.pid);
+  drawRoster(r);
+}
+const NEXT = { '': '출석', '출석': '지각', '지각': '미출석', '미출석': '출석' };
+const MARK_CLS = { '': 'unchecked', '출석': 'present', '지각': 'late', '미출석': 'absent' };
+function drawRoster(r) {
+  const st = S.roster, p = r.period;
+  header(`${md(r.date)}(${r.day}) ${p.name}`, `${p.start}~${p.end} · 감독 ${r.supervisor ? r.supervisor + ' 선생님' : '미배정'}`);
+  const done = r.targets.filter(t => t.mark).length, total = r.targets.length;
+  const counts = {};
+  r.absent.forEach(a => { counts[a.label] = (counts[a.label] || 0) + 1; });
+  main().innerHTML = `
+    <div class="sp"><input type="date" class="field" id="rdate" value="${st.date}" style="flex:1"><button class="chip" id="reload">새로고침</button></div>
+    <div class="seg">${S.init.periods.map(x => `<button data-pid="${x.id}" class="${x.id === st.pid ? 'on' : ''}">${x.name}</button>`).join('')}</div>
+    ${r.closed ? '<div class="card"><p class="empty">운영하지 않는 날입니다</p></div>' : `
+    <div class="stats">
+      <div class="stat"><small>출석 대상</small><b>${total}명</b></div>
+      <div class="stat"><small>체크 완료</small><b style="color:var(--ok)">${done}명</b></div>
+      <div class="stat"><small>미체크</small><b style="color:var(--text-sub)">${total - done}명</b></div>
+    </div>
+    <div class="card" style="padding:14px;gap:8px"><div class="sp"><h3 style="font-size:13px">체크 진행</h3><span style="font-size:13px;font-weight:500;color:var(--accent-text)">${done} / ${total}명 (${total ? Math.round(done / total * 100) : 0}%)</span></div>
+      <div class="bar"><i style="width:${total ? done / total * 100 : 0}%"></i></div></div>
+    ${r.canEdit ? `<button class="btn line" id="all" ${total === done ? 'disabled' : ''}>미체크 학생 전원 출석</button>` : `<p class="note">※ ${r.date > localToday() ? '미래 날짜는 체크할 수 없습니다' : '이 날의 감독 교사만 체크할 수 있습니다 (조회 전용)'}</p>`}
+    <div class="card list">${total ? r.targets.map((t, i) => `<button class="row" data-i="${i}" ${r.canEdit ? '' : 'disabled'}>
+        <span class="c">${esc(t.cls)}-${esc(t.num)}</span><span class="n">${esc(t.name)}</span><span class="pill ${MARK_CLS[t.mark]}">${t.mark || '미체크'}</span></button>`).join('') : '<p class="empty" style="padding:12px 0">출석 대상이 없습니다</p>'}</div>
+    ${r.canEdit ? '<p class="note">※ 이름을 누르면 출석 → 지각 → 미출석 순으로 바뀝니다</p>' : ''}
+    <details class="card" style="padding:14px;gap:8px"><summary class="sp"><h3>▸ 불참 예정 ${r.absent.length}명</h3><span class="note">${Object.keys(counts).map(k => `${esc(k)} ${counts[k]}`).join(' · ')}</span></summary>
+      ${r.absent.map(a => `<div class="row" style="min-height:40px"><span class="c">${esc(a.cls)}-${esc(a.num)}</span><span class="n" style="font-size:14px;font-weight:400">${esc(a.name)}${a.detail ? `<span class="d"> · ${esc(a.detail)}</span>` : ''}</span><span class="pill excused">${esc(a.label)}</span><span class="t">${a.time} 입력</span></div>`).join('')}
+    </details>`}`;
+  const m = main();
+  m.onclick = async e => {
+    const b = e.target.closest('button');
+    if (!b) return;
+    if (b.dataset.pid) { st.pid = b.dataset.pid; loading(); viewRoster().catch(fail); }
+    else if (b.id === 'reload') { loading(); viewRoster().catch(fail); }
+    else if (b.id === 'all') {
+      if (!confirm(`미체크 학생 ${total - done}명을 모두 출석으로 처리할까요?`)) return;
+      b.disabled = true;
+      try { drawRoster(await api('markAllPresent', st.date, st.pid)); toast('전원 출석 처리했습니다'); } catch (err) { fail(err); b.disabled = false; }
+    } else if (b.dataset.i) {
+      const t = r.targets[+b.dataset.i], prev = t.mark;
+      t.mark = NEXT[prev]; drawRoster(r);
+      try { await api('setAttendance', st.date, st.pid, t.email, t.mark); }
+      catch (err) { t.mark = prev; drawRoster(r); fail(err); }
+    }
+  };
+  m.onchange = e => { if (e.target.id === 'rdate' && e.target.value) { st.date = e.target.value; loading(); viewRoster().catch(fail); } };
+}
+
+// ───────────── 교사: 우리 반 ─────────────
+async function viewReport() {
+  const me = S.me;
+  const classes = me.isAdmin ? S.init.classes : (me.homeroom ? [String(me.homeroom)] : []);
+  if (!classes.length) {
+    header('우리 반 조회', '');
+    main().innerHTML = '<div class="card"><p class="empty">담당 반이 등록되어 있지 않습니다. 관리자에게 \'교사\' 시트의 담당반 입력을 요청하세요.</p></div>';
+    return;
+  }
+  if (!S.report) S.report = { cls: classes[0], range: 'week' };
+  const st = S.report;
+  const d = await api('getClassReport', st.cls, st.range);
+  header('우리 반 조회', `2학년 ${d.cls}반 · ${md(d.from)} ~ ${md(d.to)} · 조회 전용`);
+  main().innerHTML = `
+    ${classes.length > 1 ? `<select class="field" id="cls">${classes.map(c => `<option ${c === st.cls ? 'selected' : ''} value="${esc(c)}">${esc(c)}반</option>`).join('')}</select>` : ''}
+    <div class="chips">${[['week', '이번 주'], ['month', '이번 달'], ['term', '학기']].map(([k, l]) => `<button class="chip ${st.range === k ? 'on' : ''}" data-range="${k}">${l}</button>`).join('')}</div>
+    <div class="card" style="padding:4px 16px"><table class="tbl">
+      <tr><th>번호</th><th style="text-align:left">이름</th><th>출석률</th><th>사유</th><th>무단</th></tr>
+      ${d.rows.map(x => `<tr><td>${esc(x.num)}</td><td>${esc(x.name)}</td><td>${x.rate == null ? '-' : x.rate + '%'}</td><td>${x.excused}</td><td class="${x.absent >= 2 ? 'warn' : ''}">${x.absent}</td></tr>`).join('')}
+    </table></div>
+    <div class="card list" style="padding:12px 16px 4px"><h3>최근 불참 입력</h3>
+      ${d.recent.length ? d.recent.map(x => `<div class="row" style="flex-direction:column;align-items:flex-start;gap:4px">
+        <div><b style="font-weight:500">${esc(x.name)}</b> <span class="pill ${x.type === '결석' ? 'absent' : 'excused'}">${esc(x.label)}</span></div>
+        <div class="d">${md(x.createdAt.slice(0, 10))} ${x.createdAt.slice(11, 16)} 입력 · ${md(x.date)} ${esc(x.summary)}${x.detail ? ' · ' + esc(x.detail) : ''}${x.proof ? ` · <a href="${esc(x.proof)}" target="_blank">증빙</a>` : ''}</div></div>`).join('') : '<p class="empty" style="padding-bottom:12px">입력 내역이 없습니다</p>'}
+    </div>
+    <p class="note">※ 출석률 = (출석 + 지각) ÷ (신청 교시 − 사유 불참). 무단 2회 이상은 빨간색입니다.</p>`;
+  const m = main();
+  m.onclick = e => { const b = e.target.closest('button[data-range]'); if (b) { st.range = b.dataset.range; loading(); viewReport().catch(fail); } };
+  m.onchange = e => { if (e.target.id === 'cls') { st.cls = e.target.value; loading(); viewReport().catch(fail); } };
+}
+
+// ───────────── 시작 ─────────────
+api('getInit').then(init => {
+  S.init = init; S.me = init.me;
+  if (S.me.role === 'none') {
+    header('야자 출석', S.me.email);
+    main().innerHTML = '<div class="card"><p>등록되지 않은 계정입니다.</p><p class="note">관리자에게 학생 또는 교사 등록을 요청하세요.</p></div>';
+    return;
+  }
+  go(S.me.role === 'student' ? 'schedule' : 'roster');
+}).catch(e => { header('야자 출석', '오류'); main().innerHTML = `<div class="card"><p>${esc(e.message || e)}</p></div>`; });
+</script>
+</body>
+</html>
