@@ -29,6 +29,12 @@
    ```
    줄마다 길이·제한·속도가 출력되고, 다음 줄과 겹치면 속도를 자동으로 올립니다(최대 1.5배). `OVER`가 나오면 대본을 줄이세요.
 
-## 다른 음성으로 바꾸려면
+## 다른 음성(외부 TTS·직접 녹음)으로 바꾸려면
 
-`public/audio/nar_XX.wav` 파일을 같은 이름의 녹음/외부 TTS 파일로 덮어쓰면 됩니다. 길이가 달라지면 `src/audioCues.ts`의 `dur`(프레임)도 맞춰 주세요.
+1. `audio-preview/narration_scripts.md`의 표대로 문장마다 파일을 만들어 `nar_00`, `nar_01` … 이름으로 한 폴더에 저장 (wav/mp3/m4a/ogg)
+2. 빌드
+   ```bash
+   .venv/bin/python tools/audio/build_audio.py <프로젝트 폴더> --from-files <음성 파일 폴더>
+   ```
+   파일 길이를 재서 `audioCues.ts`를 다시 쓰고, 최대 길이를 넘는 문장은 `OVER`로 표시합니다.
+3. 다시 렌더링: `npm run build`

@@ -2,7 +2,8 @@
 내레이션(TTS) + 효과음 큐 빌드 스크립트.
 
 사용법:
-  python build_audio.py <프로젝트 폴더> <TTS 모델 폴더>
+  python build_audio.py <프로젝트 폴더> <TTS 모델 폴더>      # 오프라인 TTS로 생성
+  python build_audio.py <프로젝트 폴더> --from-files <폴더>   # 외부 음성 파일(nar_00.wav/mp3 ...) 사용
 
 입력: <프로젝트>/audio/script.json
   {
@@ -32,22 +33,36 @@ base_speed = spec.get('speed', 1.15)
 MAX_SPEED = 1.5
 GAP = 0.15
 
-name = os.path.basename(os.path.normpath(model_dir))
-onnx = [f for f in os.listdir(model_dir) if f.endswith('.onnx')][0]
-tts = sherpa_onnx.OfflineTts(
-    sherpa_onnx.OfflineTtsConfig(
-        model=sherpa_onnx.OfflineTtsModelConfig(
-            vits=sherpa_onnx.OfflineTtsVitsModelConfig(
-                model=os.path.join(model_dir, onnx),
-                tokens=os.path.join(model_dir, 'tokens.txt'),
-                data_dir=os.path.join(model_dir, 'espeak-ng-data'),
-            ),
-            num_threads=4,
+FROM_FILES = model_dir == '--from-files'
+ext_dir = sys.argv[3] if FROM_FILES else None
+tts = None
+if not FROM_FILES:
+    onnx = [f for f in os.listdir(model_dir) if f.endswith('.onnx')][0]
+    tts = sherpa_onnx.OfflineTts(
+        sherpa_onnx.OfflineTtsConfig(
+            model=sherpa_onnx.OfflineTtsModelConfig(
+                vits=sherpa_onnx.OfflineTtsVitsModelConfig(
+                    model=os.path.join(model_dir, onnx),
+                    tokens=os.path.join(model_dir, 'tokens.txt'),
+                    data_dir=os.path.join(model_dir, 'espeak-ng-data'),
+                ),
+                num_threads=4,
+            )
         )
     )
-)
 
 out_dir = os.path.join(proj, 'public', 'audio')
+if FROM_FILES:
+    # 외부 파일을 먼저 임시로 읽어 둔다 (out_dir 과 같은 폴더일 수 있음)
+    import subprocess, tempfile
+    ext = {}
+    for f in os.listdir(ext_dir):
+        stem, e = os.path.splitext(f)
+        if stem.startswith('nar_') and e.lower() in ('.wav', '.mp3', '.m4a', '.ogg'):
+            tmp = tempfile.mktemp(suffix='.wav')
+            subprocess.run(['ffmpeg', '-y', '-v', 'error', '-i', os.path.join(ext_dir, f), '-ac', '1', '-ar', '44100', tmp], check=True)
+            x, sr = sf.read(tmp, dtype='float32')
+            ext[stem] = (x, sr)
 shutil.rmtree(out_dir, ignore_errors=True)
 os.makedirs(os.path.join(out_dir, 'sfx'))
 
@@ -67,13 +82,24 @@ report = []
 for i, ln in enumerate(lines):
     limit = (lines[i + 1]['t'] if i + 1 < len(lines) else total) - ln['t'] - GAP
     speed = base_speed
-    while True:
+    while not FROM_FILES:
         a = tts.generate(ln['text'], sid=0, speed=speed)
         x = trim(np.asarray(a.samples, dtype=np.float32), a.sample_rate)
         dur = len(x) / a.sample_rate
         if dur <= limit or speed >= MAX_SPEED:
             break
         speed = min(MAX_SPEED, speed * max(1.03, dur / limit))
+    if FROM_FILES:
+        if f'nar_{i:02d}' not in ext:
+            raise SystemExit(f'nar_{i:02d} 파일이 없습니다: {ext_dir}')
+        x, sr = ext[f'nar_{i:02d}']
+        x = trim(x, sr)
+        dur = len(x) / sr
+        speed = 1.0
+
+        class _A:
+            sample_rate = sr
+        a = _A()
     x = x / (np.max(np.abs(x)) + 1e-9) * 0.9
     fname = f'nar_{i:02d}.wav'
     sf.write(os.path.join(out_dir, fname), x, a.sample_rate, subtype='PCM_16')
