@@ -1,4 +1,5 @@
 import React from 'react';
+import {AudioTrack} from './AudioTrack';
 import {AbsoluteFill, Composition, Series} from 'remotion';
 import {Scene1} from './scenes/Scene1';
 import {Scene2} from './scenes/Scene2';
@@ -39,6 +40,7 @@ export const MicrowaveMetal: React.FC = () => (
         <Scene6 />
       </Series.Sequence>
     </Series>
+    <AudioTrack />
   </AbsoluteFill>
 );
 

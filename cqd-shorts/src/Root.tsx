@@ -1,4 +1,5 @@
 import React from 'react';
+import {AudioTrack} from './AudioTrack';
 import {AbsoluteFill, Composition, Sequence} from 'remotion';
 import {COLORS, FPS, HEIGHT, SCENES, TOTAL_FRAMES, WIDTH} from './constants';
 import {Scene1NobelHook} from './scenes/Scene1_NobelHook';
@@ -25,6 +26,7 @@ export const CQDShorts: React.FC = () => (
         <Component />
       </Sequence>
     ))}
+    <AudioTrack />
   </AbsoluteFill>
 );
 

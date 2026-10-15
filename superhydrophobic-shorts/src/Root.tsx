@@ -1,4 +1,5 @@
 import React from 'react';
+import {AudioTrack} from './AudioTrack';
 import {AbsoluteFill, Composition, Series} from 'remotion';
 import {COLORS, FPS, HEIGHT, sceneDuration, TOTAL_FRAMES, WIDTH} from './constants';
 import {Scene1Hook} from './scenes/Scene1_Hook';
@@ -34,6 +35,7 @@ export const SuperhydrophobicShorts: React.FC = () => (
         <Scene5Outro />
       </Series.Sequence>
     </Series>
+    <AudioTrack />
   </AbsoluteFill>
 );
 

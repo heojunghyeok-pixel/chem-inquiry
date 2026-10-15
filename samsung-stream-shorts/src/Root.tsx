@@ -1,4 +1,5 @@
 import React from 'react';
+import {AudioTrack} from './AudioTrack';
 import {AbsoluteFill, Composition, Sequence} from 'remotion';
 import {COLORS, FPS, HEIGHT, SCENES, TOTAL_FRAMES, WIDTH} from './constants';
 import {Scene1Hook} from './scenes/Scene1_Hook';
@@ -25,6 +26,7 @@ export const SamsungStreamShorts: React.FC = () => (
         <Component />
       </Sequence>
     ))}
+    <AudioTrack />
   </AbsoluteFill>
 );
 
