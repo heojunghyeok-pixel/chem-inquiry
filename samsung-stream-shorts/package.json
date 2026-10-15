@@ -1,0 +1,24 @@
+{
+  "name": "samsung-stream-shorts",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Remotion 9:16 shorts: 삼성천 수질탐구 - 몰리브덴 블루 발색과 분광광도계 흡광도",
+  "scripts": {
+    "start": "remotion studio src/index.ts",
+    "build": "remotion render src/index.ts SamsungStreamShorts out/video.mp4",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@fontsource/jetbrains-mono": "5.3.0",
+    "@fontsource/noto-sans-kr": "5.3.1",
+    "@remotion/cli": "4.0.535",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "remotion": "4.0.535"
+  },
+  "devDependencies": {
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "typescript": "7.0.2"
+  }
+}
