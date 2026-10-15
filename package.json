@@ -1,0 +1,24 @@
+{
+  "name": "microwave-metal-shorts",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Remotion 9:16 shorts: 전자레인지에 금속을 넣으면?",
+  "scripts": {
+    "start": "remotion studio src/index.ts",
+    "build": "remotion render src/index.ts MicrowaveMetal out/video.mp4",
+    "typecheck": "tsc --noEmit",
+    "still": "remotion still src/index.ts MicrowaveMetal out/still.png"
+  },
+  "dependencies": {
+    "@fontsource/noto-sans-kr": "5.3.1",
+    "@remotion/cli": "4.0.535",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "remotion": "4.0.535"
+  },
+  "devDependencies": {
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "typescript": "7.0.2"
+  }
+}
