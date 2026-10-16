@@ -1,6 +1,6 @@
 # [교사용] 학생 활동지 예시 답안
 
-> 학생용: `student-worksheet.md` · 실험 근거와 문헌: `asymmetric-synthesis-camp.md`
+> 학생용 활동지와 함께 사용 · 실험 근거와 참고 문헌: 실험 프로토콜 문서(asymmetric-synthesis-camp.md)
 
 ## 0. 생각 열기
 - **Q0-1** 거울상이지만 어떻게 돌려도 서로 겹쳐지지 않는다(카이랄).
